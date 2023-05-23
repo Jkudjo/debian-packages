@@ -8,6 +8,10 @@ sudo apt install -y curl
 #For Oh-my-zsh shell
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
+#Install fzf
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+~/.fzf/install
+
 # Update package lists
 sudo apt update
 
