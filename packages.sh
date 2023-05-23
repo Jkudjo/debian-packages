@@ -14,6 +14,10 @@ sudo apt update
 # Install essential packages
 sudo apt install -y build-essential curl wget git
 
+# Install fuzzy finder
+git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+~/.fzf/install
+
 # Install common utilities
 sudo apt install -y zip unzip tar gzip
 
