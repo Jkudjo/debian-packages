@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -e  # Exit on error
+# Don't use set -e as we want to handle missing packages gracefully
+# set -e  # Exit on error
 
 # ============================================
 # Helper Functions
@@ -32,13 +33,17 @@ apt_install_if_missing() {
 }
 
 # Install apt packages (checking each individually for better feedback)
+# Handles packages that may not be available in all Debian versions
 apt_install_safe() {
     for pkg in "$@"; do
         if package_installed "$pkg"; then
             echo "  ✓ $pkg is already installed, skipping..."
         else
             echo "  → Installing $pkg..."
-            sudo apt install -y "$pkg"
+            if sudo apt install -y "$pkg" 2>&1 | tee /tmp/apt_install.log | grep -q "Unable to locate package"; then
+                echo "  ⚠ $pkg is not available in this Debian version, skipping..."
+            fi
+            rm -f /tmp/apt_install.log
         fi
     done
 }
@@ -53,7 +58,19 @@ echo ""
 # ============================================
 echo "[1/9] Updating package lists and installing essentials..."
 sudo apt update
-apt_install_safe build-essential curl wget git gnupg lsb-release ca-certificates software-properties-common apt-transport-https
+apt_install_safe build-essential curl wget git gnupg lsb-release ca-certificates apt-transport-https
+
+# software-properties-common is Ubuntu-specific, skip if not available
+if ! package_installed "software-properties-common"; then
+    echo "  → Attempting to install software-properties-common..."
+    if sudo apt install -y software-properties-common 2>&1 | grep -q "Unable to locate package"; then
+        echo "  ⚠ software-properties-common not available (Ubuntu-only package), skipping..."
+    else
+        echo "  ✓ software-properties-common installed"
+    fi
+else
+    echo "  ✓ software-properties-common is already installed, skipping..."
+fi
 
 # ============================================
 # STEP 2: Shell & Terminal Tools
