@@ -40,10 +40,12 @@ apt_install_safe() {
             echo "  ✓ $pkg is already installed, skipping..."
         else
             echo "  → Installing $pkg..."
-            if sudo apt install -y "$pkg" 2>&1 | tee /tmp/apt_install.log | grep -q "Unable to locate package"; then
+            # Check if package exists in repository first
+            if apt-cache show "$pkg" >/dev/null 2>&1; then
+                sudo apt install -y "$pkg" || echo "  ⚠ Failed to install $pkg, continuing..."
+            else
                 echo "  ⚠ $pkg is not available in this Debian version, skipping..."
             fi
-            rm -f /tmp/apt_install.log
         fi
     done
 }
@@ -62,11 +64,11 @@ apt_install_safe build-essential curl wget git gnupg lsb-release ca-certificates
 
 # software-properties-common is Ubuntu-specific, skip if not available
 if ! package_installed "software-properties-common"; then
-    echo "  → Attempting to install software-properties-common..."
-    if sudo apt install -y software-properties-common 2>&1 | grep -q "Unable to locate package"; then
-        echo "  ⚠ software-properties-common not available (Ubuntu-only package), skipping..."
+    if apt-cache show software-properties-common >/dev/null 2>&1; then
+        echo "  → Installing software-properties-common..."
+        sudo apt install -y software-properties-common || echo "  ⚠ Failed to install software-properties-common, continuing..."
     else
-        echo "  ✓ software-properties-common installed"
+        echo "  ⚠ software-properties-common not available (Ubuntu-only package), skipping..."
     fi
 else
     echo "  ✓ software-properties-common is already installed, skipping..."
